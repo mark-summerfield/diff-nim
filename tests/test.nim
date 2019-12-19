@@ -37,7 +37,7 @@ suite "diff tests":
   test "01":
     let a = "the quick brown fox jumped over the lazy dogs".split()
     let b = "the quick red fox jumped over the very busy dogs".split()
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
       newSpan(tagEqual, 0, 2, 0, 2),   # the quick
       newSpan(tagReplace, 2, 3, 2, 3), # brown -> red
@@ -53,7 +53,7 @@ suite "diff tests":
   test "02":
     let a = toSeq("qabxcd")
     let b = toSeq("abycdf")
-    let diff: Diff[char] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
         newSpan(tagDelete, 0, 1, 0, 0),  # q ->
         newSpan(tagEqual, 1, 3, 0, 2),   # ab
@@ -69,7 +69,7 @@ suite "diff tests":
   test "03":
     let a = toSeq("private Thread currentThread;")
     let b = toSeq("private volatile Thread currentThread;")
-    let diff: Diff[char] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
         newSpan(tagEqual, 0, 6, 0, 6),    # privat
         newSpan(tagInsert, 6, 6, 6, 15),  # -> e volatil
@@ -83,21 +83,21 @@ suite "diff tests":
   test "04":
     let a = "the quick brown fox jumped over the lazy dogs".split()
     let b = "the quick red fox jumped over the very busy dogs".split()
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let longest = diff.longestMatch(0, len(a), 0, len(b))
     check(newMatch(3, 3, 4) == longest)
 
   test "05":
     let a = "a s c ( 99 ) x z".split()
     let b = "r s b c ( 99 )".split()
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let longest = diff.longestMatch(0, len(a), 0, len(b))
     check(newMatch(2, 3, 4) == longest)
 
   test "06":
     let a = "foo\nbar\nbaz\nquux".split('\n')
     let b = "foo\nbaz\nbar\nquux".split('\n')
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
         newSpan(tagEqual, 0, 1, 0, 1),  # foo
         newSpan(tagInsert, 1, 1, 1, 2), # -> baz
@@ -113,7 +113,7 @@ suite "diff tests":
   test "07":
     let a = "foo\nbar\nbaz\nquux".split('\n')
     let b = "foo\nbaz\nbar\nquux".split('\n')
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
         newSpan(tagInsert, 1, 1, 1, 2), # -> baz
         newSpan(tagDelete, 2, 3, 3, 3), # baz ->
@@ -126,7 +126,7 @@ suite "diff tests":
   test "08":
     let a = "foo\nbar\nbaz\nquux".split('\n')
     let b = "foo\nbaz\nbar\nquux".split('\n')
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
         newSpan(tagInsert, 1, 1, 1, 2), # -> baz
         newSpan(tagDelete, 2, 3, 3, 3), # baz ->
@@ -139,7 +139,7 @@ suite "diff tests":
   test "09":
     let a = @[1, 2, 3, 4, 5, 6]
     let b = @[2, 3, 5, 7]
-    let diff: Diff[int] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
         newSpan(tagDelete, 0, 1, 0, 0),  # 1 ->
         newSpan(tagEqual, 1, 3, 0, 2),   # 2 3
@@ -155,7 +155,7 @@ suite "diff tests":
   test "10":
     let a = toSeq("qabxcd")
     let b = toSeq("abycdf")
-    let diff: Diff[char] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
         newSpan(tagDelete, 0, 1, 0, 0),  # q ->
         newSpan(tagEqual, 1, 3, 0, 2),   # a b
@@ -186,7 +186,7 @@ suite "diff tests":
       newItem(6, 1, "E"),
       newItem(4, 2, "G"),
       ]
-    let diff: Diff[Item] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
       newSpan(tagEqual, 0, 1, 0, 1),  # A
       newSpan(tagInsert, 1, 1, 1, 2), # -> C
@@ -214,7 +214,7 @@ suite "diff tests":
       newItem(9, 5, "yankee"),
       newItem(8, 3, "charlie"),
       ]
-    let diff: Diff[Item] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
       newSpan(tagDelete, 0, 1, 0, 0),  # quebec ->
       newSpan(tagEqual, 1, 3, 0, 2),   # alpha bravo
@@ -228,7 +228,7 @@ suite "diff tests":
   test "13":
     let a = toSeq("abxcd")
     let b = toSeq("abcd")
-    let diff: Diff[char] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[
         newMatch(0, 0, 2),
         newMatch(3, 2, 2),
@@ -242,7 +242,7 @@ suite "diff tests":
   test "14":
     let a = "the quick brown fox jumped over the lazy dogs".split()
     let b = newSeq[string]() # empty
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[newSpan(tagDelete, 0, 9, 0, 0)]
     let spans = diff.spans()
     check(len(expected) == len(spans))
@@ -252,7 +252,7 @@ suite "diff tests":
   test "15":
     let a = newSeq[string]() # empty
     let b = "the quick red fox jumped over the very busy dogs".split()
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let expected = @[newSpan(tagInsert, 0, 0, 0, 10)]
     let spans = diff.spans()
     check(len(expected) == len(spans))
@@ -262,6 +262,6 @@ suite "diff tests":
   test "16":
     let a = newSeq[string]() # empty
     let b = newSeq[string]() # empty
-    let diff: Diff[string] = newDiff(a, b)
+    let diff = newDiff(a, b)
     let spans = diff.spans()
     check(len(spans) == 0)

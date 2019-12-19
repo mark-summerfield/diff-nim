@@ -12,7 +12,8 @@
 ## To get a comparison, first call ``let diff = newDiff(a, b)`` where ``a``
 ## and ``b`` are both sequences containing the same type of object. Then
 ## call ``diff.spans()`` to get a sequence of ``Spans`` which if followed
-## would turn sequence ``a`` into sequence ``b``.
+## would turn sequence ``a`` into sequence ``b``. (See the tests/test.nim
+## file for examples.)
 ##
 ## (The algorithm is a slightly simplified version of the one used by the
 ## Python difflib module's SequenceMatcher.)
