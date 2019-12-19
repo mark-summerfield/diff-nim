@@ -9,7 +9,7 @@ and `hash()`.
 
 # Examples
 
-See `src/tests/test.nim`.
+See `tests/test.nim`.
 
 # License
 
