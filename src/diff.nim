@@ -9,7 +9,7 @@
 ## The sequences could be seq[string] of words, or any other sequence
 ## providing the elements support ``==`` and ``hash()``.
 ##
-## To get a comparison, first call ``diff = newDiff(a, b)`` where ``a``
+## To get a comparison, first call ``let diff = newDiff(a, b)`` where ``a``
 ## and ``b`` are both sequences containing the same type of object. Then
 ## call ``diff.spans()`` to get a sequence of ``Spans`` which if followed
 ## would turn sequence ``a`` into sequence ``b``.
