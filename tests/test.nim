@@ -6,6 +6,7 @@
 import diff
 import hashes
 import sequtils
+import strformat
 import strutils
 import sugar
 import unittest
@@ -265,3 +266,144 @@ suite "diff tests":
     let diff = newDiff(a, b)
     let spans = diff.spans()
     check(len(spans) == 0)
+
+  test "17":
+    #        0   1     2     3   4      5    6   7    8
+    let a = "the quick brown fox jumped over the lazy dogs".split()
+    #        0   1     2   3   4      5    6   7    8    9
+    let b = "the quick red fox jumped over the very busy dogs".split()
+    let diff = newDiff(a, b)
+    let expected = @[
+      newSpan(tagEqual, 0, 2, 0, 2),   # the quick
+      newSpan(tagDelete, 2, 3, 2, 3),  # brown ->
+      newSpan(tagInsert, 2, 3, 2, 3),  # -> red
+      newSpan(tagEqual, 3, 7, 3, 7),   # fox jumped over the
+      newSpan(tagDelete, 7, 8, 7, 9),  # lazy ->
+      newSpan(tagInsert, 7, 8, 7, 9),  # -> very busy
+      newSpan(tagEqual, 8, 9, 9, 10),  # dogs
+      ]
+    let spans = diff.spans(useReplace = false)
+    check(len(expected) == len(spans))
+    for (act, exp) in zip(spans, expected):
+      check(act == exp)
+
+  test "18":
+    let a = "the quick brown fox jumped over the lazy dogs".split()
+    let b = "the slow red fox jumped over the very busy dogs".split()
+    let expected = @[
+      """change "quick brown" => "slow red"""",
+      """change "lazy" => "very busy""""
+      ]
+    var spans = newSeq[string]()
+    let diff = newDiff(a, b)
+    for span in diff.spans(skipSame = true):
+      let aspan = join(a[span.aStart ..< span.aEnd], " ")
+      let bspan = join(b[span.bStart ..< span.bEnd], " ")
+      case span.tag
+      of tagReplace:
+        spans.add("change \"" & aspan & "\" => \"" & bspan & "\"")
+      of tagInsert: spans.add("insert \"" & bspan & "\"")
+      of tagDelete: spans.add("delete \"" & aspan & "\"")
+      of tagEqual: doAssert(false) # Should never occur
+    check(len(expected) == len(spans))
+    for (act, exp) in zip(spans, expected):
+      check(act == exp)
+
+  test "19":
+    let a = "the quick brown fox jumped over the lazy dogs".split()
+    let b = "the slow red fox jumped over the very busy dogs".split()
+    let expected = @[
+      """delete "quick brown"""",
+      """insert "slow red"""",
+      """delete "lazy"""",
+      """insert "very busy""""
+      ]
+    var spans = newSeq[string]()
+    let diff = newDiff(a, b)
+    for span in diff.spans(skipSame = true, useReplace = false):
+      let aspan = join(a[span.aStart ..< span.aEnd], " ")
+      let bspan = join(b[span.bStart ..< span.bEnd], " ")
+      case span.tag
+      of tagInsert: spans.add("insert \"" & bspan & "\"")
+      of tagDelete: spans.add("delete \"" & aspan & "\"")
+      of tagEqual, tagReplace: doAssert(false) # Should never occur
+    check(len(expected) == len(spans))
+    for (act, exp) in zip(spans, expected):
+      check(act == exp)
+
+  test "20":
+    let a = "quebec alpha bravo x-ray yankee".split()
+    let b = "alpha bravo yankee charlie".split()
+    let expected = @[
+      """delete "quebec"""",
+      """delete "x-ray"""",
+      """insert "charlie"""",
+      ]
+    var spans = newSeq[string]()
+    let diff = newDiff(a, b)
+    for span in diff.spans(skipSame = true):
+      let aspan = join(a[span.aStart ..< span.aEnd], " ")
+      let bspan = join(b[span.bStart ..< span.bEnd], " ")
+      case span.tag
+      of tagReplace:
+        spans.add("change \"" & aspan & "\" => \"" & bspan & "\"")
+      of tagInsert: spans.add("insert \"" & bspan & "\"")
+      of tagDelete: spans.add("delete \"" & aspan & "\"")
+      of tagEqual: doAssert(false) # Should never occur
+    check(len(expected) == len(spans))
+    for (act, exp) in zip(spans, expected):
+      check(act == exp)
+
+  test "21":
+    let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
+             "As are you.").split('\n')
+    let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
+             "And so are you.").split('\n')
+    let expected = @[
+      "replace a[0:1]: Tulips are yellow, => Roses are red,",
+      "replace a[2:4]: Agar is sweet, NL As are you. => " &
+        "Sugar is sweet, NL And so are you."
+      ]
+    var spans = newSeq[string]()
+    let diff = newDiff(a, b)
+    for span in diff.spans(skipSame = true):
+      case span.tag
+      of tagReplace:
+        spans.add(&"replace a[{span.aStart}:{span.aEnd}]: " &
+                  join(a[span.aStart ..< span.aEnd], " NL ") & " => " &
+                  join(b[span.bStart ..< span.bEnd], " NL "))
+      of tagDelete:
+        spans.add(&"delete a[{span.aStart}:{span.aEnd}]: " &
+                  join(a[span.aStart ..< span.aEnd], " NL "))
+      of tagInsert:
+        spans.add(&"insert b[{span.bStart}:{span.bEnd}]: " &
+                  join(b[span.bStart ..< span.bEnd], " NL "))
+      of tagEqual: doAssert(false) # Should never occur
+    check(len(expected) == len(spans))
+    for (act, exp) in zip(spans, expected):
+      check(act == exp)
+
+  test "22":
+    let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
+             "As are you.").split('\n')
+    let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
+             "And so are you.").split('\n')
+    let expected = @[
+      "delete a[0:1]: Tulips are yellow,",
+      "insert b[0:1]: Roses are red,",
+      "insert b[2:4]: Sugar is sweet, NL And so are you.",
+      ]
+    var spans = newSeq[string]()
+    let diff = newDiff(a, b)
+    for span in diff.spans(skipSame = true, useReplace = false):
+      case span.tag
+      of tagDelete:
+        spans.add(&"delete a[{span.aStart}:{span.aEnd}]: " &
+                  join(a[span.aStart ..< span.aEnd], " NL "))
+      of tagInsert:
+        spans.add(&"insert b[{span.bStart}:{span.bEnd}]: " &
+                  join(b[span.bStart ..< span.bEnd], " NL "))
+      of tagEqual, tagReplace: doAssert(false) # Should never occur
+    check(len(expected) == len(spans))
+    for (act, exp) in zip(spans, expected):
+      check(act == exp)

@@ -9,7 +9,32 @@ and `hash()`.
 
 # Examples
 
-See `tests/test.nim`.
+For example, this code:
+```nim
+
+let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
+					"As are you.").split('\n')
+let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
+					"And so are you.").split('\n')
+let diff = newDiff(a, b)
+for span in diff.spans(skipSame = true, useReplace = false):
+	case span.tag
+	of tagDelete:
+		spans.add(&"delete a[{span.aStart}:{span.aEnd}]: " &
+							join(a[span.aStart ..< span.aEnd], " NL "))
+	of tagInsert:
+		spans.add(&"insert b[{span.bStart}:{span.bEnd}]: " &
+							join(b[span.bStart ..< span.bEnd], " NL "))
+	of tagEqual, tagReplace: doAssert(false) # Should never occur
+```
+produces this output:
+```
+delete a[0:1]: Tulips are yellow,
+insert b[0:1]: Roses are red,
+insert b[2:4]: Sugar is sweet, NL And so are you.
+```
+
+See also `tests/test.nim`.
 
 # License
 
