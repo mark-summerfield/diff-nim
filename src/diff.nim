@@ -17,6 +17,8 @@
 ##
 ## (The algorithm is a slightly simplified version of the one used by the
 ## Python difflib module's SequenceMatcher.)
+##
+## See also `diff on github <https://github.com/mark-summerfield/diff>`_.
 
 import algorithm
 import math
@@ -42,12 +44,11 @@ type
     b2j: Table[T, seq[int]]
 
 proc newMatch*(aStart, bStart, length: int): Match =
+  ## Creates a new match: only public for testing purposes
   (aStart, bStart, length)
 
-proc newSpan*(tag: Tag): Span =
-  result.tag = tag
-
 proc newSpan*(tag: Tag, aStart, aEnd, bStart, bEnd: int): Span =
+  ## Creates a new span: only public for testing purposes
   result.tag = tag
   result.aStart = aStart
   result.aEnd = aEnd
@@ -69,7 +70,7 @@ proc newDiff*[T](a, b: seq[T]): Diff[T] =
   ## To get all the matches (i.e., the positions and lengths) where `a`
   ## and `b` are the same, use ``diff.matches()``.
   ##
-  ## If you need _both_ the matches _and_ the spans, use
+  ## If you need *both* the matches *and* the spans, use
   ## ``diff.matches()``, and then use ``spansForMatches()``.
   result.a = a
   result.b = b
@@ -98,7 +99,7 @@ proc spans*[T](diff: Diff[T]; skipSame = false,
   ## deletions).
   ## If ``skipSame`` is ``true``, spans don't contain equals.
   ##
-  ## If you need _both_ the matches _and_ the spans, use
+  ## If you need *both* the matches *and* the spans, use
   ## ``diff.matches()``, and then use ``spansForMatches()``.
   let matches = diff.matches()
   spansForMatches(matches, skipSame = skipSame, useReplace = useReplace)
@@ -182,16 +183,16 @@ proc longestMatch*[T](diff: Diff[T], aStart, aEnd, bStart, bEnd: int):
 
 proc spansForMatches*(matches: seq[Match]; skipSame = false,
                       useReplace = true): seq[Span] =
-  # Returns all the spans (equals, insertions, deletions, replacements)
-  # necessary to convert sequence ``a`` into ``b``, given the precomputed
-  # matches. Drops the equals spans if skipSame is true; doesn't use
-  # tagReplace if useReplace is false.
-  #
-  # Use this if you need _both_ matches _and_ spans, to avoid needlessly
-  # recomputing the matches, i.e., call ``diff.matches()`` to get the
-  # matches, and then this function for the spans.
-  #
-  # If you don't need the matches, then use ``diff.spans()``.
+  ## Returns all the spans (equals, insertions, deletions, replacements)
+  ## necessary to convert sequence ``a`` into ``b``, given the precomputed
+  ## matches. Drops the equals spans if skipSame is true; doesn't use
+  ## tagReplace if useReplace is false.
+  ##
+  ## Use this if you need *both* matches *and* spans, to avoid needlessly
+  ## recomputing the matches, i.e., call ``diff.matches()`` to get the
+  ## matches, and then this function for the spans.
+  ##
+  ## If you don't need the matches, then use ``diff.spans()``.
   var i = 0
   var j = 0
   for match in matches:

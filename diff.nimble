@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.0"
+version       = "0.2.1"
 author        = "Mark Summerfield"
 description   = "Library for finding the differences between two sequences"
 license       = "Apache-2.0"
