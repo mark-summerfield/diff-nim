@@ -200,8 +200,7 @@ proc spansForMatches*(matches: seq[Match]; skipSame = false,
       if useReplace:
         span.tag = tagReplace
       else:
-        if match.length != 0:
-          result.add(newSpan(tagDelete, i, match.aStart, j, match.bStart))
+        result.add(newSpan(tagDelete, i, match.aStart, j, match.bStart))
         span.tag = tagInsert
     elif i < match.aStart:
       span.tag = tagDelete

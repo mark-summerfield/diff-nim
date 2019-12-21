@@ -391,6 +391,7 @@ suite "diff tests":
     let expected = @[
       "delete a[0:1]: Tulips are yellow,",
       "insert b[0:1]: Roses are red,",
+      "delete a[2:4]: Agar is sweet, NL As are you.",
       "insert b[2:4]: Sugar is sweet, NL And so are you.",
       ]
     var spans = newSeq[string]()
