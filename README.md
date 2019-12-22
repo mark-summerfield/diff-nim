@@ -17,22 +17,24 @@ let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
 let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
           "And so are you.").split('\n')
 let diff = newDiff(a, b)
-for span in diff.spans(skipSame = true, useReplace = false):
+for span in diff.spans(skipEqual = true):
   case span.tag
+  of tagReplace:
+    spans.add(&"replace [{span.aStart}:{span.aEnd}]: " &
+              join(a[span.aStart ..< span.aEnd], " NL ") & " => " &
+              join(b[span.bStart ..< span.bEnd], " NL "))
   of tagDelete:
     spans.add(&"delete a[{span.aStart}:{span.aEnd}]: " &
               join(a[span.aStart ..< span.aEnd], " NL "))
   of tagInsert:
     spans.add(&"insert b[{span.bStart}:{span.bEnd}]: " &
               join(b[span.bStart ..< span.bEnd], " NL "))
-  of tagEqual, tagReplace: doAssert(false) # Should never occur
+  of tagEqual: doAssert(false) # Should never occur
 ```
 produces this output:
 ```
-delete a[0:1]: Tulips are yellow,
-insert b[0:1]: Roses are red,
-delete a[2:4]: Agar is sweet, NL As are you.
-insert b[2:4]: Sugar is sweet, NL And so are you.
+"replace [0:1]: Tulips are yellow, => Roses are red,",
+"replace [2:4]: Agar is sweet, NL As are you. => Sugar is sweet, NL And so are you.",
 ```
 
 See also `tests/test.nim`.

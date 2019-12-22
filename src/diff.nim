@@ -64,8 +64,6 @@ proc newDiff*[T](a, b: seq[T]): Diff[T] =
   ##
   ## To get all the spans (equals, insertions, deletions, replacements)
   ## necessary to convert sequence `a` into `b`, use ``diff.spans()``.
-  ## If ``diff.spans()`` is called with `useReplace` set to `false`, then
-  ## the spans will always be (equals, insertions, deletions).
   ##
   ## To get all the matches (i.e., the positions and lengths) where `a`
   ## and `b` are the same, use ``diff.matches()``.
@@ -91,18 +89,15 @@ proc chain_b_seq[T](diff: var Diff[T]) =
     for element in bPopular.items():
       diff.b2j.del(element)
 
-proc spans*[T](diff: Diff[T]; skipSame = false,
-               useReplace = true): seq[Span] =
+proc spans*[T](diff: Diff[T]; skipEqual = false): seq[Span] =
   ## Returns all the spans (equals, insertions, deletions,
   ## replacements) necessary to convert sequence ``a`` into ``b``.
-  ## If ``useReplace`` is ``true``, spans only contain (equals, insertions,
-  ## deletions).
-  ## If ``skipSame`` is ``true``, spans don't contain equals.
+  ## If ``skipEqual`` is ``true``, spans don't contain equals.
   ##
   ## If you need *both* the matches *and* the spans, use
   ## ``diff.matches()``, and then use ``spansForMatches()``.
   let matches = diff.matches()
-  spansForMatches(matches, skipSame = skipSame, useReplace = useReplace)
+  spansForMatches(matches, skipEqual = skipEqual)
 
 proc matches*[T](diff: Diff[T]): seq[Match] =
   ## Returns every ``Match`` between the two sequences.
@@ -181,12 +176,10 @@ proc longestMatch*[T](diff: Diff[T], aStart, aEnd, bStart, bEnd: int):
     inc bestSize
   newMatch(bestI, bestJ, bestSize)
 
-proc spansForMatches*(matches: seq[Match]; skipSame = false,
-                      useReplace = true): seq[Span] =
+proc spansForMatches*(matches: seq[Match]; skipEqual = false): seq[Span] =
   ## Returns all the spans (equals, insertions, deletions, replacements)
   ## necessary to convert sequence ``a`` into ``b``, given the precomputed
-  ## matches. Drops the equals spans if skipSame is true; doesn't use
-  ## tagReplace if useReplace is false.
+  ## matches. Drops the equals spans if skipEqual is true.
   ##
   ## Use this if you need *both* matches *and* spans, to avoid needlessly
   ## recomputing the matches, i.e., call ``diff.matches()`` to get the
@@ -198,11 +191,7 @@ proc spansForMatches*(matches: seq[Match]; skipSame = false,
   for match in matches:
     var span = newSpan(tagEqual, i, match.aStart, j, match.bStart)
     if i < match.aStart and j < match.bStart:
-      if useReplace:
-        span.tag = tagReplace
-      else:
-        result.add(newSpan(tagDelete, i, match.aStart, j, match.bStart))
-        span.tag = tagInsert
+      span.tag = tagReplace
     elif i < match.aStart:
       span.tag = tagDelete
     elif j < match.bStart:
@@ -213,5 +202,5 @@ proc spansForMatches*(matches: seq[Match]; skipSame = false,
     j = match.bStart + match.length
     if match.length != 0:
       result.add(newSpan(tagEqual, match.aStart, i, match.bStart, j))
-  if skipSame:
+  if skipEqual:
     result = filter(result, span => span.tag != tagEqual)
