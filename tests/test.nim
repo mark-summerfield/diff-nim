@@ -46,7 +46,7 @@ suite "diff tests":
       newSpan(tagReplace, 7, 8, 7, 9), # lazy -> very busy
       newSpan(tagEqual, 8, 9, 9, 10),  # dogs
       ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -62,7 +62,7 @@ suite "diff tests":
         newSpan(tagEqual, 4, 6, 3, 5),   # cd
         newSpan(tagInsert, 6, 6, 5, 6),  # -> f
       ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -76,7 +76,7 @@ suite "diff tests":
         newSpan(tagInsert, 6, 6, 6, 15),  # -> e volatil
         newSpan(tagEqual, 6, 29, 15, 38), # e Thread currentThread;
     ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -106,7 +106,7 @@ suite "diff tests":
         newSpan(tagDelete, 2, 3, 3, 3), # baz ->
         newSpan(tagEqual, 3, 4, 3, 4),  # quux
     ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -119,7 +119,8 @@ suite "diff tests":
         newSpan(tagInsert, 1, 1, 1, 2), # -> baz
         newSpan(tagDelete, 2, 3, 3, 3), # baz ->
     ]
-    let spans = filter(diff.spans(), span => span.tag != tagEqual)
+    # See test 08 for a better solution
+    let spans = filter(toSeq(diff.spans()), span => span.tag != tagEqual)
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -132,7 +133,7 @@ suite "diff tests":
         newSpan(tagInsert, 1, 1, 1, 2), # -> baz
         newSpan(tagDelete, 2, 3, 3, 3), # baz ->
     ]
-    let spans = diff.spans(skipEqual=true)
+    let spans = toSeq(diff.spans(skipEqual=true))
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -148,7 +149,7 @@ suite "diff tests":
         newSpan(tagEqual, 4, 5, 2, 3),   # 5
         newSpan(tagReplace, 5, 6, 3, 4), # 6 -> 7
     ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -164,7 +165,7 @@ suite "diff tests":
         newSpan(tagEqual, 4, 6, 3, 5),   # c d
         newSpan(tagInsert, 6, 6, 5, 6),  # -> f
     ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -197,7 +198,7 @@ suite "diff tests":
       newSpan(tagDelete, 5, 6, 5, 5), # F ->
       newSpan(tagEqual, 6, 7, 5, 6),  # G
       ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -221,7 +222,7 @@ suite "diff tests":
       newSpan(tagEqual, 1, 3, 0, 2),   # alpha bravo
       newSpan(tagReplace, 3, 4, 2, 4), # x-ray -> yankee charlie
       ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -245,7 +246,7 @@ suite "diff tests":
     let b = newSeq[string]() # empty
     let diff = newDiff(a, b)
     let expected = @[newSpan(tagDelete, 0, 9, 0, 0)]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -255,7 +256,7 @@ suite "diff tests":
     let b = "the quick red fox jumped over the very busy dogs".split()
     let diff = newDiff(a, b)
     let expected = @[newSpan(tagInsert, 0, 0, 0, 10)]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -264,7 +265,7 @@ suite "diff tests":
     let a = newSeq[string]() # empty
     let b = newSeq[string]() # empty
     let diff = newDiff(a, b)
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(spans) == 0)
 
   test "17":
@@ -280,7 +281,7 @@ suite "diff tests":
       newSpan(tagReplace, 7, 8, 7, 9),  # lazy -> very busy
       newSpan(tagEqual, 8, 9, 9, 10),  # dogs
       ]
-    let spans = diff.spans()
+    let spans = toSeq(diff.spans())
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
@@ -294,7 +295,7 @@ suite "diff tests":
       ]
     var spans = newSeq[string]()
     let diff = newDiff(a, b)
-    for span in diff.spans(skipEqual = true):
+    for span in toSeq(diff.spans(skipEqual = true)):
       let aspan = join(a[span.aStart ..< span.aEnd], " ")
       let bspan = join(b[span.bStart ..< span.bEnd], " ")
       case span.tag

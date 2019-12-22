@@ -89,15 +89,16 @@ proc chain_b_seq[T](diff: var Diff[T]) =
     for element in bPopular.items():
       diff.b2j.del(element)
 
-proc spans*[T](diff: Diff[T]; skipEqual = false): seq[Span] =
-  ## Returns all the spans (equals, insertions, deletions,
-  ## replacements) necessary to convert sequence ``a`` into ``b``.
+iterator spans*[T](diff: Diff[T]; skipEqual = false): Span =
+  ## Yields all the spans (equals, insertions, deletions, replacements)
+  ## necessary to convert sequence ``a`` into ``b``.
   ## If ``skipEqual`` is ``true``, spans don't contain equals.
   ##
   ## If you need *both* the matches *and* the spans, use
   ## ``diff.matches()``, and then use ``spansForMatches()``.
   let matches = diff.matches()
-  spansForMatches(matches, skipEqual = skipEqual)
+  for span in spansForMatches(matches, skipEqual = skipEqual):
+    yield span
 
 proc matches*[T](diff: Diff[T]): seq[Match] =
   ## Returns every ``Match`` between the two sequences.
@@ -176,8 +177,8 @@ proc longestMatch*[T](diff: Diff[T], aStart, aEnd, bStart, bEnd: int):
     inc bestSize
   newMatch(bestI, bestJ, bestSize)
 
-proc spansForMatches*(matches: seq[Match]; skipEqual = false): seq[Span] =
-  ## Returns all the spans (equals, insertions, deletions, replacements)
+iterator spansForMatches*(matches: seq[Match]; skipEqual = false): Span =
+  ## Yields all the spans (equals, insertions, deletions, replacements)
   ## necessary to convert sequence ``a`` into ``b``, given the precomputed
   ## matches. Drops the equals spans if skipEqual is true.
   ##
@@ -197,10 +198,8 @@ proc spansForMatches*(matches: seq[Match]; skipEqual = false): seq[Span] =
     elif j < match.bStart:
       span.tag = tagInsert
     if span.tag != tagEqual:
-      result.add(span)
+      yield span
     i = match.aStart + match.length
     j = match.bStart + match.length
-    if match.length != 0:
-      result.add(newSpan(tagEqual, match.aStart, i, match.bStart, j))
-  if skipEqual:
-    result = filter(result, span => span.tag != tagEqual)
+    if match.length != 0 and not skipEqual:
+      yield newSpan(tagEqual, match.aStart, i, match.bStart, j)

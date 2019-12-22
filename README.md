@@ -24,10 +24,10 @@ for span in diff.spans(skipEqual = true):
               join(a[span.aStart ..< span.aEnd], " NL ") & " => " &
               join(b[span.bStart ..< span.bEnd], " NL "))
   of tagDelete:
-    spans.add(&"delete a[{span.aStart}:{span.aEnd}]: " &
+    spans.add(&"delete [{span.aStart}:{span.aEnd}]: " &
               join(a[span.aStart ..< span.aEnd], " NL "))
   of tagInsert:
-    spans.add(&"insert b[{span.bStart}:{span.bEnd}]: " &
+    spans.add(&"insert [{span.bStart}:{span.bEnd}]: " &
               join(b[span.bStart ..< span.bEnd], " NL "))
   of tagEqual: doAssert(false) # Should never occur
 ```
