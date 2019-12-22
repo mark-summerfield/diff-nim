@@ -15,10 +15,22 @@
 ## would turn sequence ``a`` into sequence ``b``. (See the tests/test.nim
 ## file for examples.)
 ##
+## Example:
+## ```nim
+## let diff = newDiff(a, b) # a and b are sequences of the same type
+## for span in diff.spans(skipEqual = true):
+##   case span.tag
+##   of tagReplace: # handle replace (== delete + insert)
+##   of tagDelete: # handle delete
+##   of tagInsert: # handle insert
+##   of tagEqual: doAssert(false) # Should never occur
+## ```
+##
 ## (The algorithm is a slightly simplified version of the one used by the
 ## Python difflib module's SequenceMatcher.)
 ##
 ## See also `diff on github <https://github.com/mark-summerfield/diff>`_.
+## For other Nim code see `FOSS <http://www.qtrac.eu/sitemap.html#foss>`_.
 
 import algorithm
 import math
@@ -42,22 +54,6 @@ type
     a: seq[T]
     b: seq[T]
     b2j: Table[T, seq[int]]
-
-proc newMatch*(aStart, bStart, length: int): Match =
-  ## Creates a new match: only public for testing purposes
-  (aStart, bStart, length)
-
-proc newSpan*(tag: Tag, aStart, aEnd, bStart, bEnd: int): Span =
-  ## Creates a new span: only public for testing purposes
-  result.tag = tag
-  result.aStart = aStart
-  result.aEnd = aEnd
-  result.bStart = bStart
-  result.bEnd = bEnd
-
-proc `==`*(a, b: Span): bool =
-  a.tag == b.tag and a.aStart == b.aStart and a.aEnd == b.aEnd and
-  a.bStart == b.bStart and a.bEnd == b.bEnd
 
 proc newDiff*[T](a, b: seq[T]): Diff[T] =
   ## Creates a new ``Diff`` and computes the comparison data.
@@ -92,7 +88,7 @@ proc chain_b_seq[T](diff: var Diff[T]) =
 iterator spans*[T](diff: Diff[T]; skipEqual = false): Span =
   ## Yields all the spans (equals, insertions, deletions, replacements)
   ## necessary to convert sequence ``a`` into ``b``.
-  ## If ``skipEqual`` is ``true``, spans don't contain equals.
+  ## If ``skipEqual`` is ``true``, spans don't contain ``tagEqual``.
   ##
   ## If you need *both* the matches *and* the spans, use
   ## ``diff.matches()``, and then use ``spansForMatches()``.
@@ -180,7 +176,7 @@ proc longestMatch*[T](diff: Diff[T], aStart, aEnd, bStart, bEnd: int):
 iterator spansForMatches*(matches: seq[Match]; skipEqual = false): Span =
   ## Yields all the spans (equals, insertions, deletions, replacements)
   ## necessary to convert sequence ``a`` into ``b``, given the precomputed
-  ## matches. Drops the equals spans if skipEqual is true.
+  ## matches. Drops any ``tagEqual`` spans if ``skipEqual`` is true.
   ##
   ## Use this if you need *both* matches *and* spans, to avoid needlessly
   ## recomputing the matches, i.e., call ``diff.matches()`` to get the
@@ -203,3 +199,20 @@ iterator spansForMatches*(matches: seq[Match]; skipEqual = false): Span =
     j = match.bStart + match.length
     if match.length != 0 and not skipEqual:
       yield newSpan(tagEqual, match.aStart, i, match.bStart, j)
+
+proc newMatch*(aStart, bStart, length: int): Match =
+  ## Creates a new match: *only public for testing purposes*.
+  (aStart, bStart, length)
+
+proc newSpan*(tag: Tag, aStart, aEnd, bStart, bEnd: int): Span =
+  ## Creates a new span: *only public for testing purposes*.
+  result.tag = tag
+  result.aStart = aStart
+  result.aEnd = aEnd
+  result.bStart = bStart
+  result.bEnd = bEnd
+
+proc `==`*(a, b: Span): bool =
+  ## Compares spans: *only public for testing purposes*.
+  a.tag == b.tag and a.aStart == b.aStart and a.aEnd == b.aEnd and
+  a.bStart == b.bStart and a.bEnd == b.bEnd

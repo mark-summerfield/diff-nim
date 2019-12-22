@@ -7,6 +7,8 @@ The sequences can be of lines, strings (e.g., words), characters,
 bytes, or of any custom “item” type so long as it implements `==`
 and `hash()`.
 
+For other Nim code see http://www.qtrac.eu/sitemap.html#foss
+
 # Examples
 
 For example, this code:
