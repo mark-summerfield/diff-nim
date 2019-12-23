@@ -40,3 +40,4 @@ st.sh
 tests/test
 .hg/
 .hg*
+x.nim
