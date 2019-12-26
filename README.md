@@ -13,31 +13,43 @@ For other Nim code see http://www.qtrac.eu/sitemap.html#foss
 
 For example, this code:
 ```nim
-
 let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
-          "As are you.").split('\n')
+         "As are you.").split('\n')
 let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
-          "And so are you.").split('\n')
-let diff = newDiff(a, b)
-for span in diff.spans(skipEqual = true):
+         "And so are you.").split('\n')
+for span in spanSlices(a, b):
   case span.tag
   of tagReplace:
-    spans.add(&"replace [{span.aStart}:{span.aEnd}]: " &
-              join(a[span.aStart ..< span.aEnd], " NL ") & " => " &
-              join(b[span.bStart ..< span.bEnd], " NL "))
+    for text in span.a:
+      echo("- ", text)
+    for text in span.b:
+      echo("+ ", text)
   of tagDelete:
-    spans.add(&"delete [{span.aStart}:{span.aEnd}]: " &
-              join(a[span.aStart ..< span.aEnd], " NL "))
+    for text in span.a:
+      echo("- ", text)
   of tagInsert:
-    spans.add(&"insert [{span.bStart}:{span.bEnd}]: " &
-              join(b[span.bStart ..< span.bEnd], " NL "))
-  of tagEqual: doAssert(false) # Should never occur
+    for text in span.b:
+      echo("+ ", text)
+  of tagEqual:
+    for text in span.a:
+      echo("= ", text)
 ```
 produces this output:
 ```
-"replace [0:1]: Tulips are yellow, => Roses are red,",
-"replace [2:4]: Agar is sweet, NL As are you. => Sugar is sweet, NL And so are you.",
+- Tulips are yellow,
++ Roses are red,
+= Violets are blue,
+- Agar is sweet,
+- As are you.
++ Sugar is sweet,
++ And so are you.
 ```
+
+If you need indexes rather than subsequences themselves, use
+``spans(a, b)``.
+
+To skip the same subsequences pass ``skipEqual = true`` and for
+``tagEqual`` use: ``of tagEqual: doAssert(false)``.
 
 See also `tests/test.nim`.
 

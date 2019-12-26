@@ -11,6 +11,22 @@ import strutils
 import sugar
 import unittest
 
+proc replacements*[T](a, b: seq[T]; prefix="% ", sep=" => "): string =
+  var i = 0
+  var j = 0
+  while i < len(a) and j < len(b):
+    result.add(prefix & $a[i] & sep & $b[j] & "\n")
+    inc i
+    inc j
+  while i < len(a):
+    result.add(prefix & $a[i] & sep & "\n")
+    inc i
+  while j < len(b):
+    result.add(prefix & sep & $b[i] & "\n")
+    inc j
+  if result.endsWith('\n'):
+    result = result[0 ..< len(result) - 1]
+
 # For Items, we only consider the text (to make testing easier)
 type
   Item = object
@@ -410,3 +426,72 @@ suite "diff tests":
     check(len(expected) == len(spans))
     for (act, exp) in zip(spans, expected):
       check(act == exp)
+
+  test "23":
+    let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
+             "As are you.").split('\n')
+    let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
+             "And so are you.").split('\n')
+    let expected = @[
+      "% Tulips are yellow, => Roses are red,",
+      "= Violets are blue,",
+      "% Agar is sweet, => Sugar is sweet,\n" &
+        "% As are you. => And so are you.",
+      ]
+    var spans = newSeq[string]()
+    for span in spanSlices(a, b):
+      case span.tag
+      of tagReplace: spans.add(replacements(span.a, span.b))
+      of tagDelete: spans.add("- " & join(span.a, "\n"))
+      of tagInsert: spans.add("+ " & join(span.b, "\n"))
+      of tagEqual: spans.add("= " & join(span.a, "\n"))
+    check(len(expected) == len(spans))
+    for (act, exp) in zip(spans, expected):
+      check(act == exp)
+
+  test "24":
+    let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
+             "As are you.").split('\n')
+    let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
+             "And so are you.").split('\n')
+    let expected = @[
+      "- Tulips are yellow,",
+      "+ Roses are red,",
+      "= Violets are blue,",
+      "- Agar is sweet,\nAs are you.",
+      "+ Sugar is sweet,\nAnd so are you.",
+      ]
+    var spans = newSeq[string]()
+    for span in spanSlices(a, b):
+      case span.tag
+      of tagReplace:
+        spans.add("- " & join(span.a, "\n"))
+        spans.add("+ " & join(span.b, "\n"))
+      of tagDelete: spans.add("- " & join(span.a, "\n"))
+      of tagInsert: spans.add("+ " & join(span.b, "\n"))
+      of tagEqual: spans.add("= " & join(span.a, "\n"))
+    check(len(expected) == len(spans))
+    for (act, exp) in zip(spans, expected):
+      check(act == exp)
+
+  test "25":
+    let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
+             "As are you.").split('\n')
+    let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
+             "And so are you.").split('\n')
+    for span in spanSlices(a, b):
+      case span.tag
+      of tagReplace:
+        for text in span.a:
+          echo("- ", text)
+        for text in span.b:
+          echo("+ ", text)
+      of tagDelete:
+        for text in span.a:
+          echo("- ", text)
+      of tagInsert:
+        for text in span.b:
+          echo("+ ", text)
+      of tagEqual:
+        for text in span.a:
+          echo("= ", text)

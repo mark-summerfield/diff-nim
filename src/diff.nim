@@ -9,21 +9,35 @@
 ## The sequences could be seq[string] of words, or any other sequence
 ## providing the elements support ``==`` and ``hash()``.
 ##
-## To get a comparison, first call ``let diff = newDiff(a, b)`` where ``a``
-## and ``b`` are both sequences containing the same type of object. Then
-## call ``diff.spans()`` to get a sequence of ``Spans`` which if followed
-## would turn sequence ``a`` into sequence ``b``. (See the tests/test.nim
-## file for examples.)
+## If you only need to compare each pair of sequences once, use
+## ``spans(a, b)`` if you only need indexes, or ``spanSlices(a, b)`` if
+## you need subsequences.
+##
+## If you need to do multiple comparisons on the same sequences, create a
+## ``Diff`` with ``newDiff`` and then use ``diff.spans()``
 ##
 ## Example:
 ## ```nim
-## let diff = newDiff(a, b) # a and b are sequences of the same type
-## for span in diff.spans(skipEqual = true):
+## let a = ("Tulips are yellow,\nViolets are blue,\nAgar is sweet,\n" &
+##          "As are you.").split('\n')
+## let b = ("Roses are red,\nViolets are blue,\nSugar is sweet,\n" &
+##          "And so are you.").split('\n')
+## for span in spanSlices(a, b):
 ##   case span.tag
-##   of tagReplace: # handle replace (== delete + insert)
-##   of tagDelete: # handle delete
-##   of tagInsert: # handle insert
-##   of tagEqual: doAssert(false) # Should never occur
+##   of tagReplace:
+##     for text in span.a:
+##       echo("- ", text)
+##     for text in span.b:
+##       echo("+ ", text)
+##   of tagDelete:
+##     for text in span.a:
+##       echo("- ", text)
+##   of tagInsert:
+##     for text in span.b:
+##       echo("+ ", text)
+##   of tagEqual:
+##     for text in span.a:
+##       echo("= ", text)
 ## ```
 ##
 ## (The algorithm is a slightly simplified version of the one used by the
@@ -44,6 +58,8 @@ type
 
   Span* = tuple[tag: Tag, aStart, aEnd, bStart, bEnd: int]
 
+  SpanSlice*[T] = tuple[tag: Tag, a, b: seq[T]]
+
   Tag* = enum
     tagEqual = "equal"
     tagInsert = "insert"
@@ -51,8 +67,8 @@ type
     tagReplace = "replace"
 
   Diff*[T] = object
-    a: seq[T]
-    b: seq[T]
+    a*: seq[T]
+    b*: seq[T]
     b2j: Table[T, seq[int]]
 
 proc newDiff*[T](a, b: seq[T]): Diff[T] =
@@ -84,6 +100,19 @@ proc chain_b_seq[T](diff: var Diff[T]) =
         bPopular.incl(element)
     for element in bPopular.items():
       diff.b2j.del(element)
+
+iterator spans*[T](a, b: seq[T]; skipEqual = false): Span =
+  ## Directly diffs and yields all the spans (equals, insertions,
+  ## deletions, replacements) necessary to convert sequence ``a`` into
+  ## ``b``. If ``skipEqual`` is ``true``, spans don't contain
+  ## ``tagEqual``.
+  ##
+  ## If you need *both* the matches *and* the spans, use
+  ## ``diff.matches()``, and then use ``spansForMatches()``.
+  let diff = newDiff(a, b, skipEqual = skipEqual)
+  let matches = diff.matches()
+  for span in spansForMatches(matches, skipEqual = skipEqual):
+    yield span
 
 iterator spans*[T](diff: Diff[T]; skipEqual = false): Span =
   ## Yields all the spans (equals, insertions, deletions, replacements)
@@ -186,19 +215,45 @@ iterator spansForMatches*(matches: seq[Match]; skipEqual = false): Span =
   var i = 0
   var j = 0
   for match in matches:
-    var span = newSpan(tagEqual, i, match.aStart, j, match.bStart)
+    var tag = tagEqual
     if i < match.aStart and j < match.bStart:
-      span.tag = tagReplace
+      tag = tagReplace
     elif i < match.aStart:
-      span.tag = tagDelete
+      tag = tagDelete
     elif j < match.bStart:
-      span.tag = tagInsert
-    if span.tag != tagEqual:
-      yield span
+      tag = tagInsert
+    if tag != tagEqual:
+      yield newSpan(tag, i, match.aStart, j, match.bStart)
     i = match.aStart + match.length
     j = match.bStart + match.length
     if match.length != 0 and not skipEqual:
       yield newSpan(tagEqual, match.aStart, i, match.bStart, j)
+
+iterator spanSlices*[T](a, b: seq[T]; skipEqual = false): SpanSlice[T] =
+  ## Directly diffs and yields all the span texts (equals, insertions,
+  ## deletions, replacements) necessary to convert sequence ``a`` into
+  ## ``b``.
+  ## Drops any ``tagEqual`` spans if ``skipEqual`` is true.
+  ## This is designed to make output easier.
+  let diff = newDiff(a, b)
+  var i = 0
+  var j = 0
+  for match in diff.matches():
+    var tag = tagEqual
+    if i < match.aStart and j < match.bStart:
+      tag = tagReplace
+    elif i < match.aStart:
+      tag = tagDelete
+    elif j < match.bStart:
+      tag = tagInsert
+    if tag != tagEqual:
+      yield newSpanSlice[T](tag, a[i ..< match.aStart],
+                            b[j ..< match.bStart])
+    i = match.aStart + match.length
+    j = match.bStart + match.length
+    if match.length != 0 and not skipEqual:
+      yield newSpanSlice[T](tagEqual, a[match.aStart ..< i],
+                            b[match.bStart ..< j])
 
 proc newMatch*(aStart, bStart, length: int): Match =
   ## Creates a new match: *only public for testing purposes*.
@@ -211,6 +266,12 @@ proc newSpan*(tag: Tag, aStart, aEnd, bStart, bEnd: int): Span =
   result.aEnd = aEnd
   result.bStart = bStart
   result.bEnd = bEnd
+
+proc newSpanSlice*[T](tag: Tag, a, b: seq[T]): SpanSlice[T] =
+  ## Creates a new span: *only public for testing purposes*.
+  result.tag = tag
+  result.a = a
+  result.b = b
 
 proc `==`*(a, b: Span): bool =
   ## Compares spans: *only public for testing purposes*.
