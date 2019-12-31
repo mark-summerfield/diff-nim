@@ -25,7 +25,7 @@ proc replacements*[T](a, b: seq[T]; prefix="% ", sep=" => "): string =
     result.add(prefix & sep & $b[i] & "\n")
     inc j
   if result.endsWith('\n'):
-    result = result[0 ..< len(result) - 1]
+    result = result[0 .. ^2]
 
 # For Items, we only consider the text (to make testing easier)
 type
