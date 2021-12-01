@@ -85,9 +85,9 @@ proc newDiff*[T](a, b: seq[T]): Diff[T] =
   result.a = a
   result.b = b
   result.b2j = initTable[T, seq[int]]()
-  result.chain_b_seq()
+  result.chainBSeq()
 
-proc chain_b_seq[T](diff: var Diff[T]) =
+proc chainBSeq[T](diff: var Diff[T]) =
   for (i, key) in diff.b.pairs():
     var indexes = diff.b2j.getOrDefault(key, @[])
     indexes.add(i)
