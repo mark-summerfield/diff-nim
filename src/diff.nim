@@ -191,7 +191,7 @@ proc longestMatch*[T](diff: Diff[T], aStart, aEnd, bStart, bEnd: int):
           bestI = i - k + 1
           bestJ = j - k + 1
           bestSize = k
-    j2len = tempJ2Len
+    j2Len = tempJ2Len
   while bestI > aStart and bestJ > bStart and
       diff.a[bestI - 1] == diff.b[bestJ - 1]:
     dec bestI
